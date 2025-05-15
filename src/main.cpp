@@ -299,10 +299,11 @@ int main(int argc, char* argv[]){
 
     if(type==0){
         startServer();
+        sendMessage("Server started on ip: "+std::string(ip)+":"+std::to_string(addy.port));
         eventLoop(host);
     }else if(type==1){
         connectClient();
-        sendMessage(username+" has joined");
+        sendMessage(username+" has joined.");
         eventLoop(peer->host);
     }
 
