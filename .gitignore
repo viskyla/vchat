@@ -1,0 +1,14 @@
+# Yes I use vscode, shush...
+.vscode/
+
+# For all of the Visual Studio users out there
+.vs/
+
+# Build file clutter
+build/
+
+# Ignore old stuff
+old/
+
+# Hey!! no personal information!!
+/notes/.obsidian
