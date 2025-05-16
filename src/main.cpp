@@ -45,6 +45,7 @@ ENetPeer* connectClient(){
 
     if(!peer){
         std::cerr << "Failed to connect to server.\n";
+        endwin();
         exit(EXIT_FAILURE);
     }
 
@@ -53,6 +54,7 @@ ENetPeer* connectClient(){
     }else{
         std::cerr << "Failed to connect to server.\n";
         enet_peer_reset(peer);
+        endwin();
         exit(EXIT_FAILURE);
     }
 
