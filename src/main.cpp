@@ -13,7 +13,7 @@
 #include <vector>
 
 std::mutex chat;
-std::deque<std::string> log;
+std::deque<std::string> logg;
 const int maxChatLines = 100;
 std::string chatBorder = "[{uname}]: ";
 
@@ -82,14 +82,14 @@ void redrawChat(){
     int start = 0;
 
     int totalWrappedLines = 0;
-    for(int i = 0; i < log.size(); i++){
-        int wrapped = (log[i].length() + maxWidth - 1) / maxWidth;
+    for(int i = 0; i < logg.size(); i++){
+        int wrapped = (logg[i].length() + maxWidth - 1) / maxWidth;
         totalWrappedLines += wrapped;
     }
     int skipLines = totalWrappedLines > maxHeight ? totalWrappedLines - maxHeight : 0;
 
-    for(int i = 0; i < log.size(); i++){
-        int lineLen = log[i].length();
+    for(int i = 0; i < logg.size(); i++){
+        int lineLen = logg[i].length();
         int wrappedLines = (lineLen + maxWidth - 1) / maxWidth;
 
         if(skipLines >= wrappedLines){
@@ -101,7 +101,7 @@ void redrawChat(){
             if(printedLines >= maxHeight) break;
             int startPos = w * maxWidth;
             int len = std::min(maxWidth, lineLen - startPos);
-            std::string sub = log[i].substr(startPos, len);
+            std::string sub = logg[i].substr(startPos, len);
             mvwprintw(chatWin, printedLines, 1, "%s", sub.c_str());
             printedLines++;
         }
@@ -118,9 +118,9 @@ void redrawChat(){
 void sendMessage(std::string message){
     {
         std::lock_guard<std::mutex> lock(chat);
-        log.push_back(message);
-        if(log.size() > maxChatLines){
-            log.pop_front();
+        logg.push_back(message);
+        if(logg.size() > maxChatLines){
+            logg.pop_front();
         }
     }
 
@@ -144,9 +144,9 @@ void handleEvent(ENetEvent event){
             std::string msg((char*)event.packet->data);
             {
                 std::lock_guard<std::mutex> lock(chat);
-                log.push_back(msg);
-                if(log.size() > maxChatLines){
-                    log.pop_front();
+                logg.push_back(msg);
+                if(logg.size() > maxChatLines){
+                    logg.pop_front();
                 }
             }
             redrawChat();
