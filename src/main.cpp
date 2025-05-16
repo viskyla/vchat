@@ -111,8 +111,7 @@ void redrawChat(){
     }
 
     wrefresh(chatWin);
-    mvhline(LINES - 4, 0, '_', COLS);
-    wrefresh(stdscr);
+    wrefresh(inputWin);
 }
 
 void sendMessage(std::string message){
@@ -220,6 +219,9 @@ void inputThread(ENetHost* host){
         }
 
         werase(inputWin);
+        mvwprintw(inputWin, 0, 0, "> ");
+        wmove(inputWin, 0, 2);
+        mvhline(LINES - 4, 0, '_', COLS);
         wrefresh(inputWin);
         curs_set(1);
     }
