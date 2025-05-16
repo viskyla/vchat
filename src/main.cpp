@@ -102,7 +102,7 @@ void redrawChat(){
             int startPos = w * maxWidth;
             int len = std::min(maxWidth, lineLen - startPos);
             std::string sub = logg[i].substr(startPos, len);
-            mvwprintw(chatWin, printedLines, 1, "%s", sub.c_str());
+            mvwprintw(chatWin, printedLines, 0, "%s", sub.c_str());
             printedLines++;
         }
         skipLines = 0;
