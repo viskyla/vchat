@@ -1,4 +1,6 @@
 #include <algorithm>
+#include <cstddef>
+#include <ctime>
 #include <map>
 #include <ncurses.h>
 #include <mutex>
