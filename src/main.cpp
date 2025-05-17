@@ -26,6 +26,8 @@ std::map<std::string,std::string> names;
 WINDOW* chatWin;
 WINDOW* inputWin;
 
+std::string last = "";
+
 ENetAddress addy;
 bool running = false;
 std::string username = "anon";
@@ -269,15 +271,24 @@ void inputThread(ENetHost* host){
 
             if(ch == '\n' || ch == '\r' || ch == KEY_ENTER){
                 break;
+            }else if(ch == 14){ 
+                buffer.insert(buffer.begin() + cursorPos, '\n');
+                cursorPos++;
             }else if(ch == KEY_BACKSPACE || ch == 127 || ch == 8){
                 if(cursorPos > 0){
                     buffer.erase(cursorPos-1, 1);
                     cursorPos--;
                 }
+            }else if(isprint(ch) || ch == '\t'){
+                buffer.insert(buffer.begin() + cursorPos, ch);
+                cursorPos++;
             }else if(ch == KEY_LEFT){
                 if(cursorPos > 0) cursorPos--;
             }else if(ch == KEY_RIGHT){
                 if(cursorPos < buffer.size()) cursorPos++;
+            }else if(ch == KEY_UP){
+                buffer = last;
+                cursorPos = last.size();
             }else if(isprint(ch)){
                 buffer.insert(buffer.begin() + cursorPos, ch);
                 cursorPos++;
@@ -285,6 +296,7 @@ void inputThread(ENetHost* host){
         }
 
         if(!buffer.empty()){
+            last = buffer;
             std::string message = chatBorder + buffer;
             sendMessage(message);
         }
