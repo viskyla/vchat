@@ -1,5 +1,5 @@
 #include <algorithm>
-#include <iterator>
+#include <map>
 #include <ncurses.h>
 #include <mutex>
 #include <deque>
@@ -17,6 +17,8 @@ std::deque<std::string> logg;
 const int maxChatLines = 100;
 std::string chatBorder = "[{uname}]: ";
 
+std::map<std::string,std::string> names;
+
 WINDOW* chatWin;
 WINDOW* inputWin;
 
@@ -33,6 +35,7 @@ ENetHost* startServer(){
 
     if(host==nullptr){
         std::cerr << "Something went wrong when initializing ENet server, please try again.";
+        endwin();
         exit(EXIT_FAILURE);
     }
 
@@ -142,6 +145,13 @@ void handleEvent(ENetEvent event){
             break;
         }
         case ENET_EVENT_TYPE_RECEIVE:{
+            if(event.channelID==1){
+                char ip[32];
+                enet_address_get_host_ip(&event.peer->address, ip, sizeof(ip));
+                names[ip] = std::string((char*)event.packet->data);
+                sendMessage(names[ip]+" has joined the room.");
+                break;
+            }
             std::string msg((char*)event.packet->data);
             {
                 std::lock_guard<std::mutex> lock(chat);
@@ -158,12 +168,21 @@ void handleEvent(ENetEvent event){
             break;
         }
         case ENET_EVENT_TYPE_DISCONNECT:{
+            char ip[32];
+            enet_address_get_host_ip(&event.peer->address, ip, sizeof(ip));
+            sendMessage(names[ip]+" has left the room.");
             break;
         }
         default:{
             break;
         }
     }
+}
+
+void die(){
+    endwin();
+    enet_peer_disconnect_now(peer,ENET_PEER_STATE_DISCONNECTING);
+    enet_deinitialize();
 }
 
 void inputThread(ENetHost* host){
@@ -281,11 +300,12 @@ int main(int argc, char* argv[]){
     cbreak();
     noecho();
     curs_set(1);
-    chatWin = newwin(LINES - 4, COLS, 0, 0);
-    inputWin = newwin(3, COLS, LINES - 3, 0);
+    chatWin = newwin(LINES - 4, COLS-6, 0, 15);
+    inputWin = newwin(3, COLS-6, LINES - 3, 15);
     scrollok(chatWin,true);
     keypad(inputWin, TRUE);
-    mvhline(LINES - 4, 0,'_', COLS);
+    mvhline(LINES - 4, 14,'_', COLS);
+    mvvline(0,14,ACS_VLINE,LINES);
     refresh();
 
     wrefresh(chatWin);
@@ -296,7 +316,7 @@ int main(int argc, char* argv[]){
         return 1;
     }
 
-    std::atexit(enet_deinitialize);
+    std::atexit(die);
 
     char ip[32];
     enet_address_get_host_ip(&addy, ip, sizeof(ip));
@@ -307,7 +327,8 @@ int main(int argc, char* argv[]){
         eventLoop(host);
     }else if(type==1){
         connectClient();
-        sendMessage(username+" has joined.");
+        ENetPacket* p = enet_packet_create(username.c_str(),username.length(),ENET_PACKET_FLAG_NO_ALLOCATE);
+        enet_peer_send(peer,1,p);
         eventLoop(peer->host);
     }
 
