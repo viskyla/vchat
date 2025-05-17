@@ -35,10 +35,10 @@ bool isServer = false;
 
 void sendMessage(std::string message);
 
-void processCommand(std::string msg){
+bool processCommand(std::string msg){
     int p = chatBorder.length();
     if(p >= msg.length() || msg[p] != '/'){
-        return;
+        return false;
     }
     p++;
 
@@ -50,7 +50,7 @@ void processCommand(std::string msg){
         args.push_back(token);
     }
 
-    if(args.empty()) return;
+    if(args.empty()) return false;
 
     std::string command = args[0];
 
@@ -74,6 +74,7 @@ void processCommand(std::string msg){
     }
 
     args.erase(args.begin());
+    return true;
 }
 
 ENetHost* startServer(){
@@ -177,14 +178,14 @@ void sendMessage(std::string message){
 
     redrawChat();
 
-    processCommand(message);
-
-    if(isServer){
-        broadcastMessage(message);
-    }else{
-        ENetPacket* packet = enet_packet_create(message.c_str(), message.size() + 1, ENET_PACKET_FLAG_RELIABLE);
-        enet_peer_send(peer, 0, packet);
-        enet_host_flush(host);
+    if(!processCommand(message)){
+        if(isServer){
+            broadcastMessage(message);
+        }else{
+            ENetPacket* packet = enet_packet_create(message.c_str(), message.size() + 1, ENET_PACKET_FLAG_RELIABLE);
+            enet_peer_send(peer, 0, packet);
+            enet_host_flush(host);
+        }
     }
 }
 
