@@ -10,9 +10,11 @@
 #include <enet/enet.h>
 #include <enet/types.h>
 #include <iostream>
+#include <stdexcept>
 #include <string>
 #include <thread>
 #include <vector>
+#include <sstream>
 
 std::mutex chat;
 std::deque<std::string> logg;
@@ -30,6 +32,49 @@ std::string username = "anon";
 ENetHost* host;
 ENetPeer* peer;
 bool isServer = false;
+
+void sendMessage(std::string message);
+
+void processCommand(std::string msg){
+    int p = chatBorder.length();
+    if(p >= msg.length() || msg[p] != '/'){
+        return;
+    }
+    p++;
+
+    std::istringstream iss(msg.substr(p));
+    std::string token;
+    std::vector<std::string> args;
+
+    while(iss >> token){
+        args.push_back(token);
+    }
+
+    if(args.empty()) return;
+
+    std::string command = args[0];
+
+
+    // CLIENT COMMANDS
+    if(command=="test"){
+        sendMessage("my goat");
+        if(args.size()>=2&&args[1] == "balls"){
+            sendMessage("my go to is");
+        }
+    }
+
+    // SERVER-ONLY COMMANDS
+    if(isServer){
+        if(command=="test2"){
+            sendMessage("my goatiest auu");
+            if(args.size()>=2&&args[1] == "uh"){
+                sendMessage("hawk two uh");
+            }
+        }
+    }
+
+    args.erase(args.begin());
+}
 
 ENetHost* startServer(){
     isServer = true;
@@ -131,6 +176,8 @@ void sendMessage(std::string message){
     }
 
     redrawChat();
+
+    processCommand(message);
 
     if(isServer){
         broadcastMessage(message);
