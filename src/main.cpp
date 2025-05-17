@@ -10,7 +10,7 @@
 #include <enet/enet.h>
 #include <enet/types.h>
 #include <iostream>
-#include <stdexcept>
+#include <fstream>
 #include <string>
 #include <thread>
 #include <vector>
@@ -324,12 +324,40 @@ void eventLoop(ENetHost* host){
     }
 }
 
+std::map<std::string,std::string> loadConf(const std::string& filename){
+    std::ifstream file(filename);
+    std::map<std::string,std::string> conf;
+    std::string line;
+    while(std::getline(file,line)){
+        size_t eq = line.find("=");
+        if(eq!=std::string::npos){
+            std::string key = line.substr(0,eq);
+            std::string val = line.substr(eq+1);
+            conf[key] = val;
+        }
+    }
+    return conf;
+}
+
+void applyConf(std::map<std::string,std::string> conf){
+    if(conf.count("username")){
+        username = conf["username"];
+    }
+
+    if(conf.count("ip")){
+        if(enet_address_set_host(&addy,conf["ip"].c_str())!=0){
+            std::cerr << "Invalid IP, try 'localhost' if you're hosting on your own system.\n";
+        }
+    }
+}
+
 int main(int argc, char* argv[]){
     int type = 2;
+    applyConf(loadConf("vchat.conf"));
     if(argc > 1){
         for(int i=1;i<argc;i++){
             if(std::strcmp(argv[i],"-h")==0){
-                std::cout << "Usage:\n-i : sets the (-i)p (ex: -i 128.0.0.1)\n-p : sets the (-p)ort (ex: -p 25565)\n-t : the (-t)ype of hosting you're doing (ex: -t s)\n\ts : (s)erver\n\tc : (c)lient\n-b : adds a custom border to your name\n\tUsage: use whatever you like, but use {uname} to add your username, also please only add one. Also use '' to encapsule it.\n\tDefault: '[{uname}]: '\n-h : shows this (the (-h)elp) menu (no way) (ex: -h)\n\nExample of full command:\n'vchat -u Username -i 128.0.0.1 -p 25565 -t s'\n";
+                std::cout << "Usage:\n-i : sets the (-i)p (ex: -i 128.0.0.1)\n-p : sets the (-p)ort (ex: -p 25565)\n-t : the (-t)ype of hosting you're doing (ex: -t s)\n\ts : (s)erver\n\tc : (c)lient\n-u : sets your (-u)sername.\n\tUsage: -u 'username'\n-b : adds a custom (-b)order to your name\n\tUsage: use whatever you like, but use {uname} to add your username, also please only add one. Also use '' to encapsule it.\n\tDefault: '[{uname}]: '\n-h : shows this (the (-h)elp) menu (no way) (ex: -h)\n\nExample of full command:\n'vchat -u Username -i 128.0.0.1 -p 25565 -t s'\n";
                 return 0;
             }else if(std::strcmp(argv[i],"-i")==0){
                 if(enet_address_set_host(&addy, argv[i += 1])!=0){
